@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classification Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1f3a2e; --ink-soft:#4b6357; --paper:#f7f2e6; --card:#fffdf7;
+    --leaf:#2f7d55; --leaf-dark:#1f5c3d; --leaf-light:#d8ecdf;
+    --amber:#e9a23b; --amber-light:#fbe8c8; --berry:#c2524a; --line:#e3dccb;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Nunito",system-ui,sans-serif; color:var(--ink); background:var(--paper);
+    background-image:radial-gradient(circle at 1px 1px, rgba(31,58,46,.07) 1px, transparent 0);
+    background-size:22px 22px; min-height:100vh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
+  header{text-align:center;margin-bottom:22px}
+  .eyebrow{font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--leaf)}
+  h1{font-family:"Fredoka",sans-serif;font-weight:700;font-size:clamp(1.9rem,6vw,2.9rem);margin:6px 0 8px;line-height:1.05}
+  .sub{color:var(--ink-soft);max-width:560px;margin:0 auto;font-size:1rem;line-height:1.5}
+  .progress{
+    position:sticky;top:0;z-index:5;background:rgba(247,242,230,.94);backdrop-filter:blur(6px);
+    padding:12px 0;margin:0 -18px 18px;padding-left:18px;padding-right:18px;border-bottom:1px solid var(--line)
+  }
+  .prow{display:flex;align-items:center;gap:12px;max-width:980px;margin:0 auto}
+  .bar{flex:1;height:14px;background:#e8e1cf;border-radius:99px;overflow:hidden}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,var(--leaf),#5fb37f);border-radius:99px;transition:width .5s ease}
+  .count{font-weight:800;font-size:.95rem;white-space:nowrap}
+  .btn{
+    font-family:inherit;font-weight:800;font-size:.9rem;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;
+    background:var(--leaf);color:#fff;box-shadow:0 3px 0 var(--leaf-dark);transition:transform .08s, box-shadow .08s
+  }
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--leaf-dark)}
+  .btn.ghost{background:#fff;color:var(--ink);box-shadow:0 3px 0 var(--line);border:1px solid var(--line)}
+  .btn.ghost:active{box-shadow:0 1px 0 var(--line)}
+  .btn.amber{background:var(--amber);box-shadow:0 3px 0 #b97a1f;color:#3b2a0e}
+  .btn.small{padding:7px 11px;font-size:.82rem}
+  section{margin-top:26px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .sec-head h2{font-family:"Fredoka",sans-serif;font-weight:600;font-size:1.3rem;margin:0}
+  .sec-head span{color:var(--ink-soft);font-size:.88rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .card{
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 14px 16px;
+    min-height:150px;display:flex;flex-direction:column;gap:10px;cursor:pointer;
+    box-shadow:0 4px 0 var(--line);transition:transform .15s, box-shadow .15s
+  }
+  .card:hover{transform:translateY(-2px)}
+  .card:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .card .top{display:flex;justify-content:space-between;align-items:center}
+  .qnum{font-family:"Fredoka",sans-serif;font-weight:700;font-size:1.05rem;background:var(--leaf-light);color:var(--leaf-dark);padding:3px 10px;border-radius:99px}
+  .lock{width:26px;height:26px;color:var(--ink-soft)}
+  .cipher{font-family:ui-monospace,Menlo,monospace;font-size:.82rem;color:#a99f88;line-height:1.5;word-break:break-all;letter-spacing:.04em}
+  .tap{margin-top:auto;font-weight:800;font-size:.82rem;color:var(--leaf)}
+  .card.open{cursor:default;background:#fff;border-color:#bfe0cb;box-shadow:0 4px 0 #bfe0cb}
+  .card.open .qnum{background:var(--leaf);color:#fff}
+  .clue{font-weight:700;line-height:1.45;font-size:.98rem}
+  .card.open .lock{color:var(--leaf)}
+  .card.flash{animation:flash .9s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(233,162,59,.8)}100%{box-shadow:0 0 0 18px rgba(233,162,59,0)}}
+
+  .list{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:26px}
+  .list h2{font-family:"Fredoka",sans-serif;font-weight:600;margin:0 0 4px;font-size:1.3rem}
+  .list p.note{margin:0 0 12px;color:var(--ink-soft);font-size:.9rem}
+  .list ol{margin:0;padding-left:0;list-style:none}
+  .list li{padding:9px 0;border-top:1px dashed var(--line);display:flex;gap:10px;line-height:1.4}
+  .list li b{min-width:52px;color:var(--leaf-dark)}
+  .list .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .empty{color:var(--ink-soft);font-style:italic}
+
+  .win{
+    display:none;text-align:center;background:var(--amber-light);border:2px solid var(--amber);border-radius:18px;
+    padding:18px;margin-top:20px
+  }
+  .win.show{display:block;animation:pop .5s ease}
+  .win h3{font-family:"Fredoka",sans-serif;margin:0 0 4px;font-size:1.4rem}
+  @keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  /* puzzle modal */
+  .overlay{position:fixed;inset:0;background:rgba(20,35,28,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:22px;width:100%;max-width:520px;padding:22px 18px 18px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pop .25s ease}
+  .modal .mtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .modal h3{font-family:"Fredoka",sans-serif;margin:0;font-size:1.3rem}
+  .x{background:none;border:0;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--ink-soft);padding:4px 8px}
+  .instr{color:var(--ink-soft);margin:0 0 4px;font-size:.92rem}
+  .hint{background:var(--leaf-light);border-radius:12px;padding:10px 12px;font-weight:700;margin:10px 0 16px}
+  .slots,.tiles{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .slots{margin-bottom:16px;min-height:50px}
+  .slot,.tile{
+    width:42px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-family:"Fredoka",sans-serif;font-weight:700;font-size:1.35rem;user-select:none
+  }
+  .slot{border:2px dashed #c9bfa8;background:#fff;cursor:pointer;color:var(--ink)}
+  .slot.filled{border-style:solid;border-color:var(--leaf)}
+  .slot.given{background:var(--leaf-light);border-color:var(--leaf);cursor:default}
+  .tile{background:var(--amber);color:#3b2a0e;border:0;box-shadow:0 3px 0 #b97a1f;cursor:pointer}
+  .tile.used{visibility:hidden}
+  .slots.shake{animation:shake .4s}
+  .slots.good .slot{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .mbtns{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .msg{text-align:center;min-height:1.4em;margin-top:10px;font-weight:800}
+  .msg.bad{color:var(--berry)} .msg.ok{color:var(--leaf)}
+  footer{text-align:center;color:var(--ink-soft);font-size:.82rem;margin-top:34px}
+  @media (max-width:420px){ .slot,.tile{width:36px;height:42px;font-size:1.15rem} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Grade 7 · Science Explorer</div>
+    <h1>Classification Quest</h1>
+    <p class="sub">Four wild zones are full of mystery jars. Tap a jar, unscramble the word, and unlock a secret explorer mission. Open all 21 jars to fill your Explorer Journal!</p>
+  </header>
+
+  <div class="progress">
+    <div class="prow">
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="count" id="count">0 / 21</div>
+    </div>
+  </div>
+
+  <div id="win" class="win">
+    <h3>Expedition complete!</h3>
+    <div>You've unlocked every mission. Your full Explorer Journal is at the bottom of the page.</div>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="list" id="studylist">
+    <h2>My Explorer Journal</h2>
+    <p class="note">Every mission you unlock is saved here.</p>
+    <ol id="listItems"></ol>
+    <div class="actions">
+      <button class="btn small" id="copyBtn">Copy journal</button>
+      <button class="btn ghost small" id="resetBtn">Start over</button>
+    </div>
+    <div class="msg" id="listMsg"></div>
+  </div>
+
+  <footer>Keep exploring, scientist!</footer>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal">
+    <div class="mtop">
+      <h3 id="mTitle">Open jar</h3>
+      <button class="x" id="closeBtn" aria-label="Close">×</button>
+    </div>
+    <p class="instr">Tap the letters in the right order to spell the word. Tap a letter in the boxes to take it back.</p>
+    <div class="hint" id="mHint"></div>
+    <div class="slots" id="slots"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="msg" id="mMsg"></div>
+    <div class="mbtns">
+      <button class="btn ghost small" id="shuffleBtn">Shuffle</button>
+      <button class="btn ghost small" id="clearBtn">Clear</button>
+      <button class="btn amber small" id="hintBtn">Show a letter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SECTIONS = [
+  {id:"mc", title:"Zone 1 · Forest Trail", note:"10 mystery jars"},
+  {id:"cmc", title:"Zone 2 · Microbe Lab", note:"7 mystery jars"},
+  {id:"match", title:"Zone 3 · Fungus Cave", note:"2 mystery jars"},
+  {id:"essay", title:"Zone 4 · Alien Island", note:"2 mystery jars"}
+];
+
+const CLUES = [
+  {n:"22", s:"mc", clue:"Find out why scientists group and classify living things", w:"NATURE", h:"Everything around us that wasn't made by people"},
+  {n:"23", s:"mc", clue:"Learn the rules for writing scientific names (binomial nomenclature)", w:"LEAF", h:"The green, flat part of a plant"},
+  {n:"24", s:"mc", clue:"Use a dichotomous key to identify and name an object", w:"SEED", h:"A plant can grow from this"},
+  {n:"25", s:"mc", clue:"Trace the path of steps through a dichotomous key to identify an object", w:"ROOT", h:"The part of a plant under the ground"},
+  {n:"26", s:"mc", clue:"Spot the feature that separates the two choices at each step of a dichotomous key", w:"POND", h:"A small body of still water"},
+  {n:"27", s:"mc", clue:"Discover what makes an organism part of Kingdom Monera: its nucleus, organelles, chlorophyll and number of cells", w:"SOIL", h:"Plants grow in it"},
+  {n:"28", s:"mc", clue:"Explore the levels of classification, from kingdom down to species, and how closely related organisms share levels", w:"LENS", h:"A curved glass that makes things look bigger"},
+  {n:"29", s:"mc", clue:"Find out what fungi do in nature and in daily life, and how they are different from plants", w:"RIVER", h:"Flowing water heading to the sea"},
+  {n:"30", s:"mc", clue:"Group animals by a body feature they share", w:"OCEAN", h:"A huge body of salt water"},
+  {n:"31", s:"mc", clue:"Match organisms to their kingdoms using cell type, how they move and what their cell wall is made of", w:"FOREST", h:"A large area full of trees"},
+  {n:"32", s:"cmc", clue:"Investigate Kingdom Monera: nuclear membrane, genetic material, number of cells, and whether some can photosynthesize", w:"GARDEN", h:"A place where people grow flowers or vegetables"},
+  {n:"33", s:"cmc", clue:"Find out how protists move (Amoeba, Paramecium and Euglena) and whether all protists move the same way", w:"JUNGLE", h:"A thick tropical forest"},
+  {n:"34", s:"cmc", clue:"Investigate fungi: what their cell walls are made of, whether they photosynthesize, how they get nutrients, and their cell type", w:"SAMPLE", h:"A small amount taken to study"},
+  {n:"35", s:"cmc", clue:"Investigate bacteria: their cell type, number of cells, and how they get food", w:"HABITAT", h:"The natural home of an animal or plant"},
+  {n:"36", s:"cmc", clue:"Meet Lactobacillus: which kingdom it belongs to, its cell type, and its role in fermented food", w:"OBSERVE", h:"To watch something carefully"},
+  {n:"37", s:"cmc", clue:"Tell Monera, Protista, Fungi and Plantae apart by nuclear membrane, pseudopodia, hyphae, chlorophyll and cell wall materials", w:"EXPLORE", h:"To travel around a place to learn about it"},
+  {n:"38", s:"cmc", clue:"Classify organisms using several features together (cells, nuclear membrane, cell wall, nutrition, movement), and decide whether one feature alone is enough", w:"NOTEBOOK", h:"Where you write down what you see"},
+  {n:"39", s:"match", clue:"Get to know example organisms from Kingdoms Monera, Protista and Fungi, and how protists move", w:"DISCOVER", h:"To find something for the first time"},
+  {n:"40", s:"match", clue:"Get to know example organisms from Kingdom Fungi, including single-celled fungi and how they reproduce", w:"SCIENTIST", h:"A person who studies the natural world"},
+  {n:"E4", s:"essay", clue:"Use a dichotomous key to name creatures and write the step path for each one", w:"MICROSCOPE", h:"A tool for seeing very tiny things"},
+  {n:"E5", s:"essay", clue:"Master the key words: types of cells, number of cells, what fungal cell walls are made of, and words for how organisms get their food", w:"LABORATORY", h:"A room where scientists do experiments"}
+].map((c, i) => ({...c, i: i + 1}));
+
+const KEY = "classification-quest-v1";
+let unlocked = new Set();
+try { const s = JSON.parse(localStorage.getItem(KEY) || "[]"); if (Array.isArray(s)) unlocked = new Set(s); } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify([...unlocked])); } catch(e) {} }
+
+const LOCK = '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const OPEN = '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+const GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ#%&?*+=<>";
+function cipher(len){ let o=""; for(let i=0;i<len;i++){ o += (i%6===5) ? " " : GLYPHS[Math.floor(Math.random()*GLYPHS.length)]; } return o; }
+function esc(t){ return t.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function render(){
+  const root = document.getElementById("sections");
+  root.innerHTML = "";
+  SECTIONS.forEach(sec => {
+    const items = CLUES.filter(c => c.s === sec.id);
+    const el = document.createElement("section");
+    el.innerHTML = `<div class="sec-head"><h2>${sec.title}</h2><span>${sec.note}</span></div><div class="grid"></div>`;
+    const grid = el.querySelector(".grid");
+    items.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "card" + (unlocked.has(c.n) ? " open" : "");
+      card.id = "card-" + c.n;
+      card.tabIndex = 0;
+      card.setAttribute("role","button");
+      fillCard(card, c);
+      card.addEventListener("click", () => { if (!unlocked.has(c.n)) openPuzzle(c); });
+      card.addEventListener("keydown", e => { if ((e.key==="Enter"||e.key===" ") && !unlocked.has(c.n)) { e.preventDefault(); openPuzzle(c); } });
+      grid.appendChild(card);
+    });
+    root.appendChild(el);
+  });
+  updateProgress();
+}
+
+function label(c){ return "Jar " + c.i; }
+
+function fillCard(card, c){
+  if (unlocked.has(c.n)) {
+    card.setAttribute("aria-label", label(c) + " mission: " + c.clue);
+    card.innerHTML = `<div class="top"><span class="qnum">${label(c)}</span>${OPEN}</div><div class="clue">${esc(c.clue)}</div>`;
+  } else {
+    card.setAttribute("aria-label", label(c) + " locked. Tap to unlock.");
+    card.innerHTML = `<div class="top"><span class="qnum">${label(c)}</span>${LOCK}</div><div class="cipher">${cipher(48)}</div><div class="tap">Tap to unlock →</div>`;
+  }
+}
+
+function decrypt(card, c){
+  card.className = "card open flash";
+  card.innerHTML = `<div class="top"><span class="qnum">${label(c)}</span>${OPEN}</div><div class="clue"></div>`;
+  const box = card.querySelector(".clue");
+  const target = c.clue; let frame = 0; const total = 22;
+  const t = setInterval(() => {
+    frame++;
+    const reveal = Math.floor(target.length * frame / total);
+    let out = "";
+    for (let i=0;i<target.length;i++){
+      out += i < reveal || target[i]===" " ? target[i] : GLYPHS[Math.floor(Math.random()*GLYPHS.length)];
+    }
+    box.textContent = out;
+    if (frame >= total){ clearInterval(t); box.textContent = target; card.setAttribute("aria-label", label(c) + " mission: " + c.clue); }
+  }, 40);
+}
+
+function updateProgress(){
+  const n = unlocked.size, total = CLUES.length;
+  document.getElementById("fill").style.width = (n/total*100) + "%";
+  document.getElementById("count").textContent = n + " / " + total;
+  document.getElementById("win").classList.toggle("show", n === total);
+  const ol = document.getElementById("listItems");
+  const items = CLUES.filter(c => unlocked.has(c.n));
+  ol.innerHTML = items.length ? items.map(c => `<li><b>${label(c)}</b><span>${esc(c.clue)}</span></li>`).join("")
+    : `<li class="empty">Your journal is empty. Open a jar to start!</li>`;
+}
+
+/* ---------- puzzle ---------- */
+let cur = null, letters = [], placed = [], given = new Set();
+const overlay = document.getElementById("overlay");
+
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function openPuzzle(c){
+  cur = c;
+  document.getElementById("mTitle").textContent = "Open " + label(c);
+  document.getElementById("mHint").textContent = "Hint: " + c.h;
+  let arr;
+  do { arr = shuffleArr(c.w.split("").map((ch,i)=>({ch,id:i}))); } while (arr.map(o=>o.ch).join("") === c.w && c.w.length > 1);
+  letters = arr;
+  placed = new Array(c.w.length).fill(null);
+  given = new Set();
+  setMsg("");
+  draw();
+  overlay.classList.add("show");
+  setTimeout(()=>{ const t=document.querySelector(".tile"); if(t) t.focus(); }, 50);
+}
+function closePuzzle(){ overlay.classList.remove("show"); cur = null; }
+
+function draw(){
+  const slots = document.getElementById("slots"), tiles = document.getElementById("tiles");
+  slots.className = "slots";
+  slots.innerHTML = ""; tiles.innerHTML = "";
+  placed.forEach((tid, i) => {
+    const s = document.createElement("div");
+    const L = tid === null ? null : letters.find(o=>o.id===tid);
+    s.className = "slot" + (L ? " filled" : "") + (given.has(i) ? " given" : "");
+    s.textContent = L ? L.ch : "";
+    s.addEventListener("click", () => { if (L && !given.has(i)) { placed[i] = null; setMsg(""); draw(); } });
+    slots.appendChild(s);
+  });
+  const used = new Set(placed.filter(x=>x!==null));
+  letters.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "tile" + (used.has(o.id) ? " used" : "");
+    b.textContent = o.ch;
+    b.setAttribute("aria-label", "Letter " + o.ch);
+    b.addEventListener("click", () => place(o.id));
+    tiles.appendChild(b);
+  });
+}
+
+function place(id){
+  const i = placed.indexOf(null);
+  if (i === -1) return;
+  placed[i] = id;
+  draw();
+  if (placed.indexOf(null) === -1) check();
+}
+
+function check(){
+  const word = placed.map(id => letters.find(o=>o.id===id).ch).join("");
+  const slots = document.getElementById("slots");
+  if (word === cur.w){
+    slots.classList.add("good");
+    setMsg("You got it! Mission unlocked.", "ok");
+    const c = cur;
+    unlocked.add(c.n); save();
+    setTimeout(() => {
+      closePuzzle();
+      const card = document.getElementById("card-" + c.n);
+      decrypt(card, c);
+      updateProgress();
+      card.scrollIntoView({behavior:"smooth", block:"center"});
+    }, 750);
+  } else {
+    slots.classList.add("shake");
+    setMsg("Not quite. Try again!", "bad");
+    setTimeout(() => {
+      placed = placed.map((x,i) => given.has(i) ? x : null);
+      draw();
+    }, 450);
+  }
+}
+
+function hintLetter(){
+  // put the correct letter into the first slot that is empty or wrong
+  for (let i=0;i<cur.w.length;i++){
+    const tid = placed[i];
+    const ok = tid !== null && letters.find(o=>o.id===tid).ch === cur.w[i];
+    if (!ok){
+      if (tid !== null) placed[i] = null;
+      const used = new Set(placed.filter(x=>x!==null));
+      let tile = letters.find(o => o.ch === cur.w[i] && !used.has(o.id));
+      if (!tile){
+        // the right letter is sitting in a later wrong slot; free it
+        for (let j=i+1;j<placed.length;j++){
+          const L = placed[j]!==null ? letters.find(o=>o.id===placed[j]) : null;
+          if (L && L.ch === cur.w[i] && !given.has(j)){ placed[j]=null; tile=L; break; }
+        }
+      }
+      placed[i] = tile.id; given.add(i);
+      setMsg("");
+      draw();
+      if (placed.indexOf(null) === -1) check();
+      return;
+    }
+    given.add(i);
+  }
+}
+
+function setMsg(t, cls){ const m=document.getElementById("mMsg"); m.textContent=t; m.className="msg"+(cls?" "+cls:""); }
+
+document.getElementById("closeBtn").addEventListener("click", closePuzzle);
+overlay.addEventListener("click", e => { if (e.target === overlay) closePuzzle(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && cur) closePuzzle(); });
+document.getElementById("shuffleBtn").addEventListener("click", () => {
+  const keep = new Set(placed.filter(x=>x!==null));
+  const free = shuffleArr(letters.filter(o=>!keep.has(o.id)));
+  let k=0; letters = letters.map(o => keep.has(o.id) ? o : free[k++]);
+  draw();
+});
+document.getElementById("clearBtn").addEventListener("click", () => { placed = placed.map((x,i)=> given.has(i)?x:null); setMsg(""); draw(); });
+document.getElementById("hintBtn").addEventListener("click", hintLetter);
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  const items = CLUES.filter(c => unlocked.has(c.n));
+  const lm = document.getElementById("listMsg");
+  if (!items.length){ lm.textContent = "Open some jars first!"; lm.className="msg bad"; return; }
+  const text = "Classification Quest – My Explorer Journal\n" + items.map(c => label(c) + ": " + c.clue).join("\n");
+  try { await navigator.clipboard.writeText(text); lm.textContent = "Copied!"; lm.className="msg ok"; }
+  catch(e){ lm.textContent = "Couldn't copy. Select the list and copy it by hand."; lm.className="msg bad"; }
+});
+
+let resetArmed = false, resetTimer;
+document.getElementById("resetBtn").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!resetArmed){ resetArmed = true; b.textContent = "Tap again to confirm"; resetTimer = setTimeout(()=>{ resetArmed=false; b.textContent="Start over"; }, 3000); return; }
+  clearTimeout(resetTimer); resetArmed = false; b.textContent = "Start over";
+  unlocked = new Set(); save(); render();
+  document.getElementById("listMsg").textContent = "";
+});
+
+render();
+</script>
+</body>
+</html>
